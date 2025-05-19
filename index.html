@@ -5,7 +5,6 @@
 	<meta name='viewport' content='width=device-width, user-scalable=no' />
 	<title>SchwimmenSinken</title>
 	<style type='text/css'>
-
 		body {
 			touch-action: none;
 			margin: 0;
@@ -34,10 +33,6 @@
 			box-shadow: 0 0 1px 1px #2f2d35;
 		}
 
-
-		/* Status display
-		 * ============== */
-
 		#status {
 			position: absolute;
 			left: 0;
@@ -47,7 +42,6 @@
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			/* don't consume click events - make children visible explicitly */
 			visibility: hidden;
 		}
 
@@ -111,9 +105,8 @@
 			visibility: visible;
 		}
 	</style>
-<link id='-gd-engine-icon' rel='icon' type='image/png' href='SuSA1.icon.png' />
-<link rel='apple-touch-icon' href='SuSA1.apple-touch-icon.png'/>
-
+	<link id='-gd-engine-icon' rel='icon' type='image/png' href='SuSA1.icon.png' />
+	<link rel='apple-touch-icon' href='SuSA1.apple-touch-icon.png'/>
 </head>
 <body>
 	<canvas id='canvas'>
@@ -123,21 +116,21 @@
 	<div id='status'>
 		<div id='status-progress' style='display: none;' oncontextmenu='event.preventDefault();'><div id ='status-progress-inner'></div></div>
 		<div id='status-indeterminate' style='display: none;' oncontextmenu='event.preventDefault();'>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
+			<div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
 		</div>
 		<div id='status-notice' class='godot' style='display: none;'></div>
 	</div>
 
+	<!-- Aufnahme- und Downloadbuttons -->
+	<div style="position: absolute; bottom: 10px; left: 10px; z-index: 9999;">
+		<button id="recordBtn">🎙️ Aufnahme starten</button>
+		<a id="downloadBtn" disabled style="pointer-events: none;">
+			<button disabled>⬇️ Download</button>
+		</a>
+	</div>
+
 	<script type='text/javascript' src='SuSA1.js'></script>
 	<script type='text/javascript'>//<![CDATA[
-
 		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"executable":"SuSA1","experimentalVK":false,"fileSizes":{"SuSA1.pck":1272400,"SuSA1.wasm":17503191},"focusCanvas":true,"gdnativeLibs":[]};
 		var engine = new Engine(GODOT_CONFIG);
 
@@ -159,7 +152,6 @@
 			requestAnimationFrame(animate);
 
 			function setStatusMode(mode) {
-
 				if (statusMode === mode || !initializing)
 					return;
 				[statusProgress, statusIndeterminate, statusNotice].forEach(elem => {
@@ -226,7 +218,6 @@
 							statusProgressInner.style.width = current/total * 100 + '%';
 							setStatusMode('progress');
 							if (current === total) {
-								// wait for progress bar animation
 								setTimeout(() => {
 									setStatusMode('indeterminate');
 								}, 500);
@@ -242,6 +233,51 @@
 			}
 		})();
 	//]]></script>
+
+	<script>
+		let mediaRecorder;
+		let audioChunks = [];
+
+		const recordBtn = document.getElementById('recordBtn');
+		const downloadBtn = document.getElementById('downloadBtn');
+		const downloadBtnInner = downloadBtn.querySelector('button');
+
+		let isRecording = false;
+
+		recordBtn.addEventListener('click', async () => {
+			if (!isRecording) {
+				try {
+					const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+					mediaRecorder = new MediaRecorder(stream);
+					audioChunks = [];
+
+					mediaRecorder.addEventListener("dataavailable", event => {
+						audioChunks.push(event.data);
+					});
+
+					mediaRecorder.addEventListener("stop", () => {
+						const blob = new Blob(audioChunks, { type: 'audio/webm' });
+						const url = URL.createObjectURL(blob);
+						downloadBtn.href = url;
+						downloadBtn.download = "aufnahme.webm";
+						downloadBtn.removeAttribute("disabled");
+						downloadBtn.style.pointerEvents = "auto";
+						downloadBtnInner.disabled = false;
+					});
+
+					mediaRecorder.start();
+					recordBtn.textContent = "🛑 Aufnahme stoppen";
+					isRecording = true;
+				} catch (err) {
+					alert("Zugriff auf Mikrofon verweigert oder nicht verfügbar.");
+					console.error(err);
+				}
+			} else {
+				mediaRecorder.stop();
+				recordBtn.textContent = "🎙️ Aufnahme starten";
+				isRecording = false;
+			}
+		});
+	</script>
 </body>
 </html>
-
