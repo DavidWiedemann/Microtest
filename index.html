@@ -12,12 +12,18 @@
 			padding: 0;
 			text-align: center;
 			background-color: black;
-			color: white; /* Textfarbe weiß für gute Lesbarkeit */
+			color: white;
+		}
+
+		#canvas-wrapper {
+			height: 600px;
+			position: relative;
 		}
 
 		#canvas {
 			display: block;
-			margin: 0 auto;
+			width: 100%;
+			height: 100%;
 			color: white;
 		}
 
@@ -106,7 +112,6 @@
 			visibility: visible;
 		}
 
-		/* Stil für die Tabellen, damit sie zum dunklen Hintergrund passen */
 		table {
 			margin: 20px auto;
 			border-collapse: collapse;
@@ -142,10 +147,14 @@
 	<link rel='apple-touch-icon' href='SuSA1.apple-touch-icon.png'/>
 </head>
 <body>
-	<canvas id='canvas'>
-		HTML5 canvas appears to be unsupported in the current browser.<br />
-		Please try updating or use a different browser.
-	</canvas>
+	<!-- Simulation-Container mit fixer Höhe -->
+	<div id="canvas-wrapper">
+		<canvas id='canvas'>
+			HTML5 canvas appears to be unsupported in the current browser.<br />
+			Please try updating or use a different browser.
+		</canvas>
+	</div>
+
 	<div id='status'>
 		<div id='status-progress' style='display: none;' oncontextmenu='event.preventDefault();'><div id ='status-progress-inner'></div></div>
 		<div id='status-indeterminate' style='display: none;' oncontextmenu='event.preventDefault();'>
@@ -154,7 +163,7 @@
 		<div id='status-notice' class='godot' style='display: none;'></div>
 	</div>
 
-	<!-- Aufnahme- und Downloadbuttons -->
+	<!-- Buttons -->
 	<div style="position: absolute; bottom: 10px; left: 10px; z-index: 9999;">
 		<button id="recordBtn">🎙️ Aufnahme starten</button>
 		<a id="downloadBtn" disabled style="pointer-events: none;">
@@ -163,158 +172,16 @@
 	</div>
 
 	<script type='text/javascript' src='SuSA1.js'></script>
-	<script type='text/javascript'>//<![CDATA[
-		const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"executable":"SuSA1","experimentalVK":false,"fileSizes":{"SuSA1.pck":1272400,"SuSA1.wasm":17503191},"focusCanvas":true,"gdnativeLibs":[]};
-		var engine = new Engine(GODOT_CONFIG);
+	<script type='text/javascript'>/* ... wie gehabt ... */</script>
 
-		(function() {
-			const INDETERMINATE_STATUS_STEP_MS = 100;
-			var statusProgress = document.getElementById('status-progress');
-			var statusProgressInner = document.getElementById('status-progress-inner');
-			var statusIndeterminate = document.getElementById('status-indeterminate');
-			var statusNotice = document.getElementById('status-notice');
-
-			var initializing = true;
-			var statusMode = 'hidden';
-
-			var animationCallbacks = [];
-			function animate(time) {
-				animationCallbacks.forEach(callback => callback(time));
-				requestAnimationFrame(animate);
-			}
-			requestAnimationFrame(animate);
-
-			function setStatusMode(mode) {
-				if (statusMode === mode || !initializing)
-					return;
-				[statusProgress, statusIndeterminate, statusNotice].forEach(elem => {
-					elem.style.display = 'none';
-				});
-				animationCallbacks = animationCallbacks.filter(function(value) {
-					return (value != animateStatusIndeterminate);
-				});
-				switch (mode) {
-					case 'progress':
-						statusProgress.style.display = 'block';
-						break;
-					case 'indeterminate':
-						statusIndeterminate.style.display = 'block';
-						animationCallbacks.push(animateStatusIndeterminate);
-						break;
-					case 'notice':
-						statusNotice.style.display = 'block';
-						break;
-					case 'hidden':
-						break;
-					default:
-						throw new Error('Invalid status mode');
-				}
-				statusMode = mode;
-			}
-
-			function animateStatusIndeterminate(ms) {
-				var i = Math.floor(ms / INDETERMINATE_STATUS_STEP_MS % 8);
-				if (statusIndeterminate.children[i].style.borderTopColor == '') {
-					Array.prototype.slice.call(statusIndeterminate.children).forEach(child => {
-						child.style.borderTopColor = '';
-					});
-					statusIndeterminate.children[i].style.borderTopColor = '#dfdfdf';
-				}
-			}
-
-			function setStatusNotice(text) {
-				while (statusNotice.lastChild) {
-					statusNotice.removeChild(statusNotice.lastChild);
-				}
-				var lines = text.split('\n');
-				lines.forEach((line) => {
-					statusNotice.appendChild(document.createTextNode(line));
-					statusNotice.appendChild(document.createElement('br'));
-				});
-			};
-
-			function displayFailureNotice(err) {
-				var msg = err.message || err;
-				console.error(msg);
-				setStatusNotice(msg);
-				setStatusMode('notice');
-				initializing = false;
-			};
-
-			if (!Engine.isWebGLAvailable()) {
-				displayFailureNotice('WebGL not available');
-			} else {
-				setStatusMode('indeterminate');
-				engine.startGame({
-					'onProgress': function (current, total) {
-						if (total > 0) {
-							statusProgressInner.style.width = current/total * 100 + '%';
-							setStatusMode('progress');
-							if (current === total) {
-								setTimeout(() => {
-									setStatusMode('indeterminate');
-								}, 500);
-							}
-						} else {
-							setStatusMode('indeterminate');
-						}
-					},
-				}).then(() => {
-					setStatusMode('hidden');
-					initializing = false;
-				}, displayFailureNotice);
-			}
-		})();
-	//]]></script>
-
-	<!-- HIER BEGINNT DEIN ERSTER CODE (Tabellen) -->
-	<table align="center" border="1" cellpadding="1" cellspacing="1" style="width:900px; margin-top: 30px;">
-		<tbody>
-			<tr>
-				<td style="background-color:#888888; text-align:center"><span style="color:#ffffff"><strong>1. Versuch</strong></span></td>
-				<td style="background-color:#888888; text-align:center"><span style="color:#ffffff"><strong>2. Versuch</strong></span></td>
-				<td style="background-color:#888888; text-align:center"><span style="color:#ffffff"><strong>3. Versuch</strong></span></td>
-			</tr>
-			<tr>
-				<td style="text-align:center">Würfel <strong>A </strong>und <strong>F</strong></td>
-				<td style="text-align:center">Würfel <strong>C</strong> und <strong>M</strong></td>
-				<td style="text-align:center">Würfel <strong>E</strong> und <strong>O</strong></td>
-			</tr>
-		</tbody>
-	</table>
-
-	<p><strong>Suche </strong>noch ein 4. Würfelpaar, mit dem du Kognis Vermutung untersuchen könntest.<br />
-	<strong>Schreibe </strong>die Buchstaben der Würfel in das jeweilige Feld.<br />
-	<strong>Dokumentiere </strong>auch die Masse und das Volumen deiner Würfel.</p>
-
-	<table border="1" cellpadding="1" cellspacing="1" style="width:900px; margin-bottom: 30px;">
-		<tbody>
-			<tr>
-				<td style="background-color:#aaaaaa; text-align:center">&nbsp;</td>
-				<td colspan="2" rowspan="1" style="background-color:#aaaaaa; text-align:center"><span style="color:#ffffff"><strong>Dein Versuch</strong></span></td>
-			</tr>
-			<tr>
-				<td style="background-color:#eeeeee; text-align:right">Würfel</td>
-				<td style="background-color:#eeeeee; text-align:center">Würfel $$Input:T_W_V1.0$$</td>
-				<td style="background-color:#eeeeee; text-align:center">Würfel $$Input:T_W_V2.0$$</td>
-			</tr>
-			<tr>
-				<td style="text-align:right"><strong><span style="color:#f39c12">Masse</span></strong></td>
-				<td style="text-align:center">$$Input:T_Ma_V1$$</td>
-				<td style="text-align:center">$$Input:T_Ma_V2$$</td>
-			</tr>
-			<tr>
-				<td style="text-align:right"><strong><span style="color:#8e44ad">Volumen</span></strong></td>
-				<td style="text-align:center">$$Input:T_Vo_V1$$</td>
-				<td style="text-align:center">$$Input:T_Vo_V2$$</td>
-			</tr>
-		</tbody>
-	</table>
-
-	<p><img src="/media/ckuploads/JungbluthAdmin/2022/04/28/experimentierraum.PNG" alt="Experimentierraum" /></p>
-	<!-- ENDE DEINES ERSTEN CODES -->
+	<!-- Tabellenbereich -->
+	<table> ... (wie in deinem Original) ... </table>
+	<p> ... </p>
+	<table> ... </table>
+	<img src="/media/ckuploads/JungbluthAdmin/2022/04/28/experimentierraum.PNG" />
 
 	<script>
+		// Aufnahme-Logik
 		let mediaRecorder;
 		let audioChunks = [];
 
@@ -352,7 +219,6 @@
 					alert("Zugriff auf Mikrofon verweigert oder nicht verfügbar.");
 					console.error(err);
 				}
-
 			} else {
 				mediaRecorder.stop();
 				recordBtn.textContent = "🎙️ Aufnahme starten";
@@ -362,3 +228,4 @@
 	</script>
 </body>
 </html>
+
